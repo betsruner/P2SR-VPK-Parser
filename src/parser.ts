@@ -71,8 +71,8 @@ function buildFilePath(extension: string, path: string, filename: string): strin
 }
 
 export function parseVPKFromBuffer(buffer: Buffer, size: number): VPKParseResult {
-  // Calculate CRC32 of entire buffer
-  const bufferCrc = crc32(new Uint8Array(buffer));
+  // Calculate CRC32 of entire buffer as hex string
+  const bufferCrc = crc32(new Uint8Array(buffer)).toString(16).padStart(8, "0");
 
   const reader = new BinaryReader(buffer);
 
