@@ -1,24 +1,6 @@
-export interface VPKHeader {
-  signature: number;
-  version: number;
-  treeSize: number;
-}
-
-export interface VPKFileEntry {
-  path: string;
-  crc: number;
-  preloadBytes: number;
-  archiveIndex: number;
-  offset: number;
-  length: number;
-  totalSize: number;
-}
-
 export interface VPKParseResult {
-  version: number;
-  treeSize: number;
-  fileCount: number;
-  files: VPKFileEntry[];
+  size: number;
+  files: Record<string, number>;
 }
 
 export const VPK_SIGNATURE = 0x55aa1234;

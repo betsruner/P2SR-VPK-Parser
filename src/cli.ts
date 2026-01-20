@@ -47,7 +47,8 @@ async function main(): Promise<void> {
 
     if (outputPath) {
       await Bun.write(outputPath, json);
-      console.log(`Parsed ${result.fileCount} files from VPK v${result.version}`);
+      const fileCount = Object.keys(result.files).length;
+      console.log(`Parsed ${fileCount} files (${result.size} bytes)`);
       console.log(`Output written to: ${outputPath}`);
     } else {
       console.log(json);

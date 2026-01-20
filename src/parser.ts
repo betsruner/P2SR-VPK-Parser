@@ -1,6 +1,4 @@
 import {
-  type VPKHeader,
-  type VPKFileEntry,
   type VPKParseResult,
   VPK_SIGNATURE,
   VPK_ENTRY_TERMINATOR,
@@ -63,6 +61,7 @@ function buildFilePath(extension: string, path: string, filename: string): strin
 
 export async function parseVPK(filePath: string): Promise<VPKParseResult> {
   const file = Bun.file(filePath);
+  const fileSize = file.size;
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   const reader = new BinaryReader(buffer);
@@ -80,15 +79,14 @@ export async function parseVPK(filePath: string): Promise<VPKParseResult> {
     throw new Error(`Unsupported VPK version: ${version}. Only version 1 and 2 are supported.`);
   }
 
-  const treeSize = reader.readUInt32();
+  reader.readUInt32(); // treeSize (not needed in output)
 
   // Skip additional v2 header fields if present
   if (version === 2) {
     reader.skip(16); // FileDataSectionSize, ArchiveMD5SectionSize, OtherMD5SectionSize, SignatureSectionSize
   }
 
-  const header: VPKHeader = { signature, version, treeSize };
-  const files: VPKFileEntry[] = [];
+  const files: Record<string, number> = {};
 
   // Parse directory tree
   // Structure: Extension -> Path -> Filename -> Entry
@@ -107,9 +105,8 @@ export async function parseVPK(filePath: string): Promise<VPKParseResult> {
         // Read file entry (18 bytes)
         const crc = reader.readUInt32();
         const preloadBytes = reader.readUInt16();
-        const archiveIndex = reader.readUInt16();
-        const offset = reader.readUInt32();
-        const length = reader.readUInt32();
+        reader.skip(6); // archiveIndex (2) + offset (4)
+        reader.skip(4); // length
         const terminator = reader.readUInt16();
 
         if (terminator !== VPK_ENTRY_TERMINATOR) {
@@ -124,25 +121,13 @@ export async function parseVPK(filePath: string): Promise<VPKParseResult> {
         }
 
         const fullPath = buildFilePath(extension, path, filename);
-        const totalSize = preloadBytes + length;
-
-        files.push({
-          path: fullPath,
-          crc,
-          preloadBytes,
-          archiveIndex,
-          offset,
-          length,
-          totalSize,
-        });
+        files[fullPath] = crc;
       }
     }
   }
 
   return {
-    version: header.version,
-    treeSize: header.treeSize,
-    fileCount: files.length,
+    size: fileSize,
     files,
   };
 }
