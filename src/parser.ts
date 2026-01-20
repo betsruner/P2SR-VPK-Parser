@@ -4,6 +4,17 @@ import {
   VPK_ENTRY_TERMINATOR,
 } from "./types.ts";
 
+function crc32(data: Uint8Array): number {
+  let crc = 0xffffffff;
+  for (let i = 0; i < data.length; i++) {
+    crc ^= data[i]!;
+    for (let j = 0; j < 8; j++) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
 class BinaryReader {
   private buffer: Buffer;
   private offset: number = 0;
@@ -60,6 +71,9 @@ function buildFilePath(extension: string, path: string, filename: string): strin
 }
 
 export function parseVPKFromBuffer(buffer: Buffer, size: number): VPKParseResult {
+  // Calculate CRC32 of entire buffer
+  const bufferCrc = crc32(new Uint8Array(buffer));
+
   const reader = new BinaryReader(buffer);
 
   // Read header
@@ -122,7 +136,7 @@ export function parseVPKFromBuffer(buffer: Buffer, size: number): VPKParseResult
     }
   }
 
-  return { size, files };
+  return { size, crc: bufferCrc, files };
 }
 
 export async function parseVPK(filePath: string): Promise<VPKParseResult> {

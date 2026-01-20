@@ -1,5 +1,6 @@
 export interface VPKParseResult {
   size: number;
+  crc: number;
   files: Record<string, number>;
 }
 
