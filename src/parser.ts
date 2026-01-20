@@ -59,11 +59,7 @@ function buildFilePath(extension: string, path: string, filename: string): strin
   return fullPath;
 }
 
-export async function parseVPK(filePath: string): Promise<VPKParseResult> {
-  const file = Bun.file(filePath);
-  const fileSize = file.size;
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+export function parseVPKFromBuffer(buffer: Buffer, size: number): VPKParseResult {
   const reader = new BinaryReader(buffer);
 
   // Read header
@@ -126,8 +122,13 @@ export async function parseVPK(filePath: string): Promise<VPKParseResult> {
     }
   }
 
-  return {
-    size: fileSize,
-    files,
-  };
+  return { size, files };
+}
+
+export async function parseVPK(filePath: string): Promise<VPKParseResult> {
+  const file = Bun.file(filePath);
+  const fileSize = file.size;
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  return parseVPKFromBuffer(buffer, fileSize);
 }

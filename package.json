@@ -9,6 +9,9 @@
   "scripts": {
     "start": "bun run src/cli.ts"
   },
+  "dependencies": {
+    "fflate": "^0.8.2"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
